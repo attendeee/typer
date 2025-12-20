@@ -14,7 +14,7 @@ type Model struct {
 }
 
 func (m Model) Init() tea.Cmd {
-	utils.ResizeByWidth(&m.Book.Chapters[0].Text, 80)
+	utils.ResizeByWidth(&m.Book.Chapters[m.Chapter].Text, 80)
 
 	// Just return `nil`, which means "no I/O right now, please." //
 	return nil
@@ -35,7 +35,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		time.Sleep(50 * time.Millisecond) // Maybe there is a better solution with channels //
-		utils.ResizeByWidth(&m.Book.Chapters[0].Text, msg.Width)
+		utils.ResizeByWidth(&m.Book.Chapters[m.Chapter].Text, msg.Width)
 
 	}
 
@@ -45,7 +45,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	var s string
 
-	for _, v := range m.Book.Chapters[0].Text {
+	for _, v := range m.Book.Chapters[m.Chapter].Text {
 		s += v
 		s += "\n"
 	}
