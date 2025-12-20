@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/attendeee/typer/ui"
+	"github.com/attendeee/typer/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -15,7 +16,7 @@ func main() {
 
 	flag.Parse()
 
-	book := MustParseJsonToBook(*path)
+	book := utils.MustParseJsonToBook(*path)
 
 	p := tea.NewProgram(&ui.Model{Book: *book})
 
