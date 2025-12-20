@@ -1,44 +1,42 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
+
+	"github.com/attendeee/typer/model"
+	"github.com/attendeee/typer/ui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type model struct{}
-
-func (m model) Init() tea.Cmd {
-
-	// Just return `nil`, which means "no I/O right now, please." //
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-
-	// Check if key press event //
-	case tea.KeyMsg:
-		switch msg.String() {
-
-		// These keys should exit the program //
-		case "ctrl+c", "q":
-			return m, tea.Quit
-
-		}
+func MustParseJsonToBook(path string) *model.Book {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
 	}
 
-	return m, nil
-}
+	var book model.Book
 
-func (m model) View() string {
-	s := "Press 'q' or 'ctrl+c'\n\n"
-	return s
+	err = json.Unmarshal(file, &book)
+	if err != nil {
+		panic(err)
+	}
+
+	return &book
+
 }
 
 func main() {
-	p := tea.NewProgram(&model{})
+	path := flag.String("path", "", "Path to json file")
+
+	flag.Parse()
+
+	book := MustParseJsonToBook(*path)
+
+	p := tea.NewProgram(&ui.Model{Book: *book})
 
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
