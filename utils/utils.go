@@ -15,6 +15,20 @@ func ResizeByWidth(s *[]string, width int) {
 
 }
 
+func ConcatenateStrings(s *[]string) string {
+	var t string
+
+	for _, v := range *s {
+		t += v
+		t += "\n"
+		t += "\n"
+	}
+
+	t += "\n"
+
+	return t
+}
+
 func WrapText(input string, width int) string {
 	if width < 1 {
 		return input

@@ -23,7 +23,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := tea.NewProgram(&ui.Model{Book: *book, Chapter: *chapter})
+	m := ui.Model{Book: *book, Chapter: *chapter}
+
+	p := tea.NewProgram(&m)
 
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
