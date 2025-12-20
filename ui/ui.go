@@ -9,7 +9,8 @@ import (
 )
 
 type Model struct {
-	Book model.Book
+	Book    model.Book
+	Chapter int
 }
 
 func (m Model) Init() tea.Cmd {

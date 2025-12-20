@@ -13,12 +13,17 @@ import (
 
 func main() {
 	path := flag.String("path", "", "Path to json file")
+	chapter := flag.Int("c", 0, "Number of chapter")
 
 	flag.Parse()
 
 	book := utils.MustParseJsonToBook(*path)
+	if *chapter >= len(book.Chapters) {
+		fmt.Println("Chapter is not present in a book")
+		os.Exit(1)
+	}
 
-	p := tea.NewProgram(&ui.Model{Book: *book})
+	p := tea.NewProgram(&ui.Model{Book: *book, Chapter: *chapter})
 
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
