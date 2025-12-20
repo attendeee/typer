@@ -6,30 +6,52 @@ import (
 
 	"github.com/attendeee/typer/model"
 	"github.com/attendeee/typer/utils"
+
 	"github.com/fatih/color"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 var (
-	highlight = color.New(color.BgRed, color.Underline).SprintFunc()
-	written   = color.New(color.FgHiWhite).SprintFunc()
+	highlight = color.New(color.BgRed, color.FgWhite, color.Bold).SprintFunc()
+	written   = color.FgGreen
 	unwritten = color.New(color.FgWhite).SprintFunc()
 )
 
 type Model struct {
-	Book      model.Book
-	Chapter   int
+	Book    model.Book
+	Chapter int
+
 	Text      string
 	CursorPos int
+
+	OffsetStep      int
+	Offsets         []int
+	UpperOffset     int
+	UpperOffsetIdx  int
+	BottomOffset    int
+	BottomOffsetIdx int
 }
 
 func (m *Model) Init() tea.Cmd {
-	m.CursorPos = 1990
 
-	utils.ResizeByWidth(&m.Book.Chapters[m.Chapter].Text, 120)
+	tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, 80)
 
-	m.Text = utils.ConcatenateStrings(&m.Book.Chapters[m.Chapter].Text)
+	m.Text = utils.ConcatenateStrings(tmp)
+
+	UpdateOffsets(m)
+
+	m.OffsetStep = 20
+
+	m.CursorPos = 0
+
+	m.UpperOffsetIdx = 0
+
+	UpdateUpperOffsetIdx(m)
+	UpdateBottomOffsetIdx(m)
+
+	m.UpperOffset = m.Offsets[m.UpperOffsetIdx]
+	m.BottomOffset = m.Offsets[m.BottomOffsetIdx]
 
 	// Just return `nil`, which means "no I/O right now, please." //
 	return nil
@@ -37,6 +59,25 @@ func (m *Model) Init() tea.Cmd {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case tea.WindowSizeMsg:
+
+		time.Sleep(100 * time.Millisecond)
+
+		m.OffsetStep = msg.Height / 2
+		tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, msg.Width/2)
+
+		m.Text = utils.ConcatenateStrings(tmp)
+
+		UpdateOffsets(m)
+
+		UpdateUpperOffsetIdx(m)
+		UpdateBottomOffsetIdx(m)
+
+		m.UpperOffset = m.Offsets[m.UpperOffsetIdx]
+		m.BottomOffset = m.Offsets[m.BottomOffsetIdx]
+
+		return m, tea.ClearScreen
 
 	// Check if key press event //
 	case tea.KeyMsg:
@@ -47,18 +88,26 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "enter":
+			if m.CursorPos+2 > len(m.Text) {
+				return m, tea.Quit
+			}
+
 			if m.Text[m.CursorPos] == '\n' {
 				m.CursorPos += 1
 			}
 
-			if m.CursorPos+1 >= len(m.Text) {
-				return m, tea.Quit
-			}
+			ScrollDown(m)
+
+			return m, nil
 
 		case "backspace":
 			if m.CursorPos > 0 {
 				m.CursorPos -= 1
 			}
+
+			ScrollUp(m)
+
+			return m, nil
 
 		default:
 			if msg.String()[0] == m.Text[m.CursorPos] {
@@ -70,15 +119,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	case tea.WindowSizeMsg:
-		time.Sleep(50 * time.Millisecond) // Maybe there is a better solution with channels //
-		utils.ResizeByWidth(&m.Book.Chapters[m.Chapter].Text, msg.Width)
-
 	}
 
 	return m, nil
 }
 
 func (m *Model) View() string {
-	return fmt.Sprintf("%s%s%s", written(m.Text[:m.CursorPos]), highlight(m.Text[m.CursorPos:m.CursorPos+1]), unwritten(m.Text[m.CursorPos+1:]))
+
+	color.Set(written)
+
+	return fmt.Sprintf("%s%s%s",
+		m.Text[m.UpperOffset:m.CursorPos],
+		highlight(m.Text[m.CursorPos:m.CursorPos+1]),
+		unwritten(m.Text[m.CursorPos+1:m.BottomOffset]))
 }

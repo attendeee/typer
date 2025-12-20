@@ -8,17 +8,19 @@ import (
 	"github.com/attendeee/typer/model"
 )
 
-func ResizeByWidth(s *[]string, width int) {
-	for i := 0; i < len(*s); i += 1 {
-		(*s)[i] = WrapText((*s)[i], width)
+func ResizeByWidth(s []string, width int) []string {
+	o := make([]string, len(s))
+	for i := 0; i < len(s); i += 1 {
+		o[i] = WrapText(s[i], width)
 	}
 
+	return o
 }
 
-func ConcatenateStrings(s *[]string) string {
+func ConcatenateStrings(s []string) string {
 	var t string
 
-	for _, v := range *s {
+	for _, v := range s {
 		t += v
 		t += "\n"
 		t += "\n"
