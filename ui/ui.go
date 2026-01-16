@@ -15,7 +15,7 @@ import (
 var (
 	highlight = color.New(color.BgRed, color.FgWhite, color.Bold).SprintFunc()
 	written   = color.FgGreen
-	unwritten = color.New(color.FgWhite).SprintFunc()
+	unwritten = color.New(color.FgHiWhite).SprintFunc()
 )
 
 type Model struct {
@@ -64,8 +64,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		time.Sleep(100 * time.Millisecond)
 
-		m.OffsetStep = msg.Height / 2
-		tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, msg.Width/2)
+		m.OffsetStep = int(float32(msg.Height) * 0.75)
+		tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, int(float32(msg.Width)*0.75))
 
 		m.Text = utils.ConcatenateStrings(tmp)
 
@@ -96,7 +96,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CursorPos += 1
 			}
 
-			ScrollDown(m)
+			if m.CursorPos+1 > m.BottomOffset {
+				ScrollDown(m)
+
+			}
 
 			return m, nil
 
@@ -105,7 +108,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CursorPos -= 1
 			}
 
-			ScrollUp(m)
+			if m.CursorPos < m.UpperOffset {
+				ScrollUp(m)
+
+			}
 
 			return m, nil
 
