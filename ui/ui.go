@@ -25,6 +25,10 @@ type Model struct {
 	Text      string
 	CursorPos int
 
+	Pager Pager
+}
+
+type Pager struct {
 	OffsetStep      int
 	Offsets         []int
 	UpperOffset     int
@@ -39,19 +43,19 @@ func (m *Model) Init() tea.Cmd {
 
 	m.Text = utils.ConcatenateStrings(tmp)
 
-	UpdateOffsets(m)
+	UpdateOffsets(m, &m.Pager)
 
-	m.OffsetStep = 20
+	m.Pager.OffsetStep = 20
 
 	m.CursorPos = 0
 
-	m.UpperOffsetIdx = 0
+	m.Pager.UpperOffsetIdx = 0
 
-	UpdateUpperOffsetIdx(m)
-	UpdateBottomOffsetIdx(m)
+	UpdateUpperOffsetIdx(m, &m.Pager)
+	UpdateBottomOffsetIdx(&m.Pager)
 
-	m.UpperOffset = m.Offsets[m.UpperOffsetIdx]
-	m.BottomOffset = m.Offsets[m.BottomOffsetIdx]
+	m.Pager.UpperOffset = m.Pager.Offsets[m.Pager.UpperOffsetIdx]
+	m.Pager.BottomOffset = m.Pager.Offsets[m.Pager.BottomOffsetIdx]
 
 	// Just return `nil`, which means "no I/O right now, please." //
 	return nil
@@ -64,18 +68,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		time.Sleep(100 * time.Millisecond)
 
-		m.OffsetStep = int(float32(msg.Height) * 0.75)
+		m.Pager.OffsetStep = int(float32(msg.Height) * 0.75)
 		tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, int(float32(msg.Width)*0.75))
 
 		m.Text = utils.ConcatenateStrings(tmp)
 
-		UpdateOffsets(m)
+		UpdateOffsets(m, &m.Pager)
 
-		UpdateUpperOffsetIdx(m)
-		UpdateBottomOffsetIdx(m)
+		UpdateUpperOffsetIdx(m, &m.Pager)
+		UpdateBottomOffsetIdx(&m.Pager)
 
-		m.UpperOffset = m.Offsets[m.UpperOffsetIdx]
-		m.BottomOffset = m.Offsets[m.BottomOffsetIdx]
+		m.Pager.UpperOffset = m.Pager.Offsets[m.Pager.UpperOffsetIdx]
+		m.Pager.BottomOffset = m.Pager.Offsets[m.Pager.BottomOffsetIdx]
 
 		return m, tea.ClearScreen
 
@@ -96,8 +100,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CursorPos += 1
 			}
 
-			if m.CursorPos+1 > m.BottomOffset {
-				ScrollDown(m)
+			if m.CursorPos+1 > m.Pager.BottomOffset {
+				ScrollDown(&m.Pager)
 
 			}
 
@@ -108,8 +112,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CursorPos -= 1
 			}
 
-			if m.CursorPos < m.UpperOffset {
-				ScrollUp(m)
+			if m.CursorPos < m.Pager.UpperOffset {
+				ScrollUp(&m.Pager)
 
 			}
 
@@ -135,7 +139,7 @@ func (m *Model) View() string {
 	color.Set(written)
 
 	return fmt.Sprintf("%s%s%s",
-		m.Text[m.UpperOffset:m.CursorPos],
+		m.Text[m.Pager.UpperOffset:m.CursorPos],
 		highlight(m.Text[m.CursorPos:m.CursorPos+1]),
-		unwritten(m.Text[m.CursorPos+1:m.BottomOffset]))
+		unwritten(m.Text[m.CursorPos+1:m.Pager.BottomOffset]))
 }
