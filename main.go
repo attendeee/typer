@@ -13,17 +13,17 @@ import (
 
 func main() {
 	path := flag.String("path", "", "Path to json file")
-	chapter := flag.Int("c", 0, "Number of chapter")
+	chapter := flag.Int("c", 1, "Number of chapter")
 
 	flag.Parse()
 
 	book := utils.MustParseJsonToBook(*path)
-	if *chapter >= len(book.Chapters) {
+	if *chapter-1 >= len(book.Chapters) {
 		fmt.Println("Chapter is not present in a book")
 		os.Exit(1)
 	}
 
-	m := ui.Model{Book: *book, Chapter: *chapter}
+	m := ui.Model{Book: *book, Chapter: *chapter - 1}
 
 	p := tea.NewProgram(&m)
 
