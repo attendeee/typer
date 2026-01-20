@@ -19,11 +19,11 @@ var (
 )
 
 type Model struct {
-	Book    model.Book
-	Chapter int
+	Book model.Book
 
-	Text      string
-	CursorPos int
+	Text string
+
+	State model.State
 
 	Pager Pager
 }
@@ -39,15 +39,13 @@ type Pager struct {
 
 func (m *Model) Init() tea.Cmd {
 
-	tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, 80)
+	tmp := utils.ResizeByWidth(m.Book.Chapters[m.State.Chapter].Text, 80)
 
 	m.Text = utils.ConcatenateStrings(tmp)
 
 	UpdateOffsets(m, &m.Pager)
 
 	m.Pager.OffsetStep = 20
-
-	m.CursorPos = 0
 
 	m.Pager.UpperOffsetIdx = 0
 
@@ -69,7 +67,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		time.Sleep(100 * time.Millisecond)
 
 		m.Pager.OffsetStep = int(float32(msg.Height) * 0.75)
-		tmp := utils.ResizeByWidth(m.Book.Chapters[m.Chapter].Text, int(float32(msg.Width)*0.75))
+		tmp := utils.ResizeByWidth(m.Book.Chapters[m.State.Chapter].Text, int(float32(msg.Width)*0.75))
 
 		m.Text = utils.ConcatenateStrings(tmp)
 
@@ -91,16 +89,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 
+		case "ctrl+s":
+			utils.SaveStateToJson(&m.State)
+			return m, nil
+
 		case "enter":
-			if m.CursorPos+2 > len(m.Text) {
+			if m.State.CursorPos+2 > uint32(len(m.Text)) {
 				return m, tea.Quit
 			}
 
-			if m.Text[m.CursorPos] == '\n' {
-				m.CursorPos += 1
+			if m.Text[m.State.CursorPos] == '\n' {
+				m.State.CursorPos += 1
 			}
 
-			if m.CursorPos+1 > m.Pager.BottomOffset {
+			if m.State.CursorPos+1 > uint32(m.Pager.BottomOffset) {
 				ScrollDown(&m.Pager)
 
 			}
@@ -108,11 +110,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "backspace":
-			if m.CursorPos > 0 {
-				m.CursorPos -= 1
+			if m.State.CursorPos > 0 {
+				m.State.CursorPos -= 1
 			}
 
-			if m.CursorPos < m.Pager.UpperOffset {
+			if m.State.CursorPos < uint32(m.Pager.UpperOffset) {
 				ScrollUp(&m.Pager)
 
 			}
@@ -120,11 +122,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		default:
-			if msg.String()[0] == m.Text[m.CursorPos] {
-				m.CursorPos += 1
+			if msg.String()[0] == m.Text[m.State.CursorPos] {
+				m.State.CursorPos += 1
 			}
 
-			if m.CursorPos+1 >= len(m.Text) {
+			if m.State.CursorPos+1 >= uint32(len(m.Text)) {
 				return m, tea.Quit
 			}
 		}
@@ -139,7 +141,7 @@ func (m *Model) View() string {
 	color.Set(written)
 
 	return fmt.Sprintf("%s%s%s",
-		m.Text[m.Pager.UpperOffset:m.CursorPos],
-		highlight(m.Text[m.CursorPos:m.CursorPos+1]),
-		unwritten(m.Text[m.CursorPos+1:m.Pager.BottomOffset]))
+		m.Text[m.Pager.UpperOffset:m.State.CursorPos],
+		highlight(m.Text[m.State.CursorPos:m.State.CursorPos+1]),
+		unwritten(m.Text[m.State.CursorPos+1:m.Pager.BottomOffset]))
 }

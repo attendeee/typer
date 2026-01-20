@@ -2,11 +2,45 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/attendeee/typer/model"
 )
+
+func GetStateFromJson() *model.State {
+
+	var s model.State
+
+	file, err := os.ReadFile("./state.json")
+	if err != nil {
+		panic(err)
+	}
+
+	json.Unmarshal(file, &s)
+
+	return &s
+}
+
+func SaveStateToJson(s *model.State) {
+
+	// Open (or create) the file with write permission, truncating it
+	file, err := os.OpenFile("./state.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return
+	}
+
+	defer file.Close()
+
+	// Encode the struct to JSON and overwrite the file
+	encoder := json.NewEncoder(file)
+
+	err = encoder.Encode(s)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+	}
+}
 
 func ResizeByWidth(s []string, width int) []string {
 	o := make([]string, len(s))

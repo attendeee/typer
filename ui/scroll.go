@@ -42,7 +42,7 @@ func ScrollDown(p *Pager) {
 
 func UpdateUpperOffsetIdx(m *Model, p *Pager) {
 	for i, v := range p.Offsets {
-		if m.CursorPos >= v && v <= m.CursorPos {
+		if m.State.CursorPos >= uint32(v) && uint32(v) <= m.State.CursorPos {
 			p.UpperOffsetIdx = i
 		}
 	}

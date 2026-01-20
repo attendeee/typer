@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/attendeee/typer/model"
 	"github.com/attendeee/typer/ui"
 	"github.com/attendeee/typer/utils"
 
@@ -23,7 +24,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	m := ui.Model{Book: *book, Chapter: *chapter - 1}
+	s := utils.GetStateFromJson()
+	if s == nil {
+		s = &model.State{Chapter: uint32(*chapter - 1), CursorPos: 0}
+	}
+
+	m := ui.Model{Book: *book, State: *s}
 
 	p := tea.NewProgram(&m)
 
