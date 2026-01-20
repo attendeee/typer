@@ -20,6 +20,7 @@ var (
 
 type Model struct {
 	Book model.Book
+	Path string
 
 	Text string
 
@@ -90,7 +91,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "ctrl+s":
-			utils.SaveStateToJson(&m.State)
+			utils.SaveStateToJson(m.Path, &m.State)
 			return m, nil
 
 		case "enter":

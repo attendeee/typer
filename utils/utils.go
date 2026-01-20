@@ -4,18 +4,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/adrg/xdg"
 	"github.com/attendeee/typer/model"
 )
 
-func GetStateFromJson() *model.State {
+func GetStateFile(path string) string {
+	storyName := filepath.Base(path)
+	storyName = strings.TrimSuffix(storyName, filepath.Ext(storyName))
+	storyName += "-state"
+
+	return storyName
+}
+
+func GetStateFromJson(path string) *model.State {
 
 	var s model.State
 
-	file, err := os.ReadFile("./state.json")
+	storyName := GetStateFile(path)
+
+	if _, err := os.Stat(xdg.DataHome + "/typer/" + storyName + ".json"); os.IsNotExist(err) {
+		os.Create(xdg.DataHome + "/typer/" + storyName + ".json")
+	}
+	// Open (or create) the file with write permission, truncating it
+	file, err := os.ReadFile(xdg.DataHome + "/typer/" + storyName + ".json")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		time.Sleep(5 * time.Second)
+		return nil
 	}
 
 	json.Unmarshal(file, &s)
@@ -23,10 +42,12 @@ func GetStateFromJson() *model.State {
 	return &s
 }
 
-func SaveStateToJson(s *model.State) {
+func SaveStateToJson(path string, s *model.State) {
+
+	storyName := GetStateFile(path)
 
 	// Open (or create) the file with write permission, truncating it
-	file, err := os.OpenFile("./state.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	file, err := os.OpenFile(xdg.DataHome+"/typer/"+storyName+".json", os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		return
 	}
