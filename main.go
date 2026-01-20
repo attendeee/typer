@@ -26,6 +26,7 @@ func main() {
 	}
 
 	path := flag.String("path", "", "Path to json file")
+	state := flag.Bool("s", false, "Use saved state")
 	chapter := flag.Int("c", 1, "Number of chapter")
 
 	flag.Parse()
@@ -36,10 +37,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	s := utils.GetStateFromJson(*path)
+	s := &model.State{Chapter: uint32(*chapter - 1), CursorPos: 0}
 
-	if s == nil {
-		s = &model.State{Chapter: uint32(*chapter - 1), CursorPos: 0}
+	if *state == true {
+		s = utils.GetStateFromJson(*path)
 	}
 
 	m := ui.Model{Book: *book, Path: *path, State: *s}
