@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	highlight = color.New(color.BgRed, color.FgWhite, color.Bold).SprintFunc()
-	written   = color.FgGreen
-	unwritten = color.New(color.FgHiWhite).SprintFunc()
+	highlight      = color.New(color.BgRed, color.FgWhite, color.Bold).SprintFunc()
+	written        = color.FgGreen
+	errorHighlight = color.New(color.FgRed, color.Bold).SprintFunc()
+	unwritten      = color.New(color.FgHiWhite).SprintFunc()
 )
 
 type Model struct {
@@ -25,6 +26,8 @@ type Model struct {
 	Text string
 
 	State model.State
+
+	ErrorCounter uint
 
 	Pager Pager
 }
@@ -43,6 +46,8 @@ func (m *Model) Init() tea.Cmd {
 	tmp := utils.ResizeByWidth(m.Book.Chapters[m.State.Chapter].Text, 80)
 
 	m.Text = utils.ConcatenateStrings(tmp)
+
+	m.ErrorCounter = 0
 
 	UpdateOffsets(m, &m.Pager)
 
@@ -105,6 +110,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.State.CursorPos+1 > uint32(m.Pager.BottomOffset) {
 				ScrollDown(&m.Pager)
+				m.ErrorCounter = 0
 
 			}
 
@@ -115,17 +121,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.State.CursorPos -= 1
 			}
 
+			if m.ErrorCounter > 0 {
+				m.ErrorCounter -= 1
+			}
+
 			if m.State.CursorPos < uint32(m.Pager.UpperOffset) {
 				ScrollUp(&m.Pager)
+				m.ErrorCounter = 0
 
 			}
 
 			return m, nil
 
 		default:
-			if msg.String()[0] == m.Text[m.State.CursorPos] {
-				m.State.CursorPos += 1
+			if msg.String()[0] != m.Text[m.State.CursorPos] {
+				m.ErrorCounter += 1
 			}
+
+			m.State.CursorPos += 1
 
 			if m.State.CursorPos+1 >= uint32(len(m.Text)) {
 				return m, tea.Quit
@@ -141,8 +154,9 @@ func (m *Model) View() string {
 
 	color.Set(written)
 
-	return fmt.Sprintf("%s%s%s",
-		m.Text[m.Pager.UpperOffset:m.State.CursorPos],
+	return fmt.Sprintf("%s%s%s%s",
+		m.Text[m.Pager.UpperOffset:m.State.CursorPos-uint32(m.ErrorCounter)],
+		errorHighlight(m.Text[m.State.CursorPos-uint32(m.ErrorCounter):m.State.CursorPos]),
 		highlight(m.Text[m.State.CursorPos:m.State.CursorPos+1]),
 		unwritten(m.Text[m.State.CursorPos+1:m.Pager.BottomOffset]))
 }
