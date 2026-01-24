@@ -10,6 +10,7 @@ type Chapter struct {
 }
 
 type State struct {
-	Chapter   uint32 `json:"chapter"`
-	CursorPos uint32 `json:"cursor_pos"`
+	Chapter      uint32 `json:"chapter"`
+	CursorPos    uint32 `json:"cursor_pos"`
+	ErrorCounter uint   `json:"error_counter"`
 }

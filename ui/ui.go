@@ -27,8 +27,6 @@ type Model struct {
 
 	State model.State
 
-	ErrorCounter uint
-
 	Pager Pager
 }
 
@@ -46,8 +44,6 @@ func (m *Model) Init() tea.Cmd {
 	tmp := utils.ResizeByWidth(m.Book.Chapters[m.State.Chapter].Text, 80)
 
 	m.Text = utils.ConcatenateStrings(tmp)
-
-	m.ErrorCounter = 0
 
 	UpdateOffsets(m, &m.Pager)
 
@@ -110,7 +106,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.State.CursorPos+1 > uint32(m.Pager.BottomOffset) {
 				ScrollDown(&m.Pager)
-				m.ErrorCounter = 0
+				m.State.ErrorCounter = 0
 
 			}
 
@@ -121,13 +117,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.State.CursorPos -= 1
 			}
 
-			if m.ErrorCounter > 0 {
-				m.ErrorCounter -= 1
+			if m.State.ErrorCounter > 0 {
+				m.State.ErrorCounter -= 1
 			}
 
 			if m.State.CursorPos < uint32(m.Pager.UpperOffset) {
 				ScrollUp(&m.Pager)
-				m.ErrorCounter = 0
+				m.State.ErrorCounter = 0
 
 			}
 
@@ -135,7 +131,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		default:
 			if msg.String()[0] != m.Text[m.State.CursorPos] {
-				m.ErrorCounter += 1
+				m.State.ErrorCounter += 1
 			}
 
 			m.State.CursorPos += 1
@@ -155,8 +151,8 @@ func (m *Model) View() string {
 	color.Set(written)
 
 	return fmt.Sprintf("%s%s%s%s",
-		m.Text[m.Pager.UpperOffset:m.State.CursorPos-uint32(m.ErrorCounter)],
-		errorHighlight(m.Text[m.State.CursorPos-uint32(m.ErrorCounter):m.State.CursorPos]),
+		m.Text[m.Pager.UpperOffset:m.State.CursorPos-uint32(m.State.ErrorCounter)],
+		errorHighlight(m.Text[m.State.CursorPos-uint32(m.State.ErrorCounter):m.State.CursorPos]),
 		highlight(m.Text[m.State.CursorPos:m.State.CursorPos+1]),
 		unwritten(m.Text[m.State.CursorPos+1:m.Pager.BottomOffset]))
 }
